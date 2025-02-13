@@ -5,7 +5,7 @@ from app_posts.models import PostsModel
 
 
 
-class PostSerialazir(serializers.Serializer):
+class PostsSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     slug = serializers.SlugField(read_only=True)
     title = serializers.CharField()
@@ -37,5 +37,4 @@ class PostSerialazir(serializers.Serializer):
         print(value)
         raise serializers.ValidationError({"error":"test"})     
 
-    def get_comments(self,obj):
-        return 10 
+   
