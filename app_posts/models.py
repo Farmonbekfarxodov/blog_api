@@ -1,6 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
-
+from django.conf import settings
 
 
 from app_common.models import BaseModel
@@ -18,7 +17,7 @@ class TopicsModel(BaseModel):
 
 class PostsModel(BaseModel):
     image = models.ImageField(upload_to="posts",null=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE,related_name="posts")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name="posts")
     title = models.CharField(max_length=255)
     slug =  models.SlugField(unique=True,blank=True)
     short_description =  models.CharField(max_length=255)
@@ -39,7 +38,7 @@ class PostsModel(BaseModel):
 
 
 class PostClapsModel(BaseModel):
-    user = models.ForeignKey(User,on_delete=models.SET_NULL,
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,
                              related_name = "post_claps",null=True
                             )
     post = models.ForeignKey(
@@ -55,7 +54,7 @@ class PostClapsModel(BaseModel):
 
 class PostCommentModel(BaseModel):
     user = models.ForeignKey(
-        User,on_delete=models.SET_NULL,
+        settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,
         related_name="post_comments",null=True
     )
     post = models.ForeignKey(
@@ -74,7 +73,7 @@ class PostCommentModel(BaseModel):
 
 class PostCommentClapsModel(BaseModel):
     user = models.ForeignKey(
-        User,on_delete=models.SET_NULL,
+        settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,
         related_name="post_comments_claps",null=True
     )
     comment = models.ForeignKey(

@@ -1,9 +1,9 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from app_posts.models import PostsModel
 
-
+User = get_user_model()
 
 class PostsSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
