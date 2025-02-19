@@ -5,7 +5,10 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated
-from .serializers import RegisterSerializer, VerifyEmailSerializer, CustomTokenObtainPairSerializer
+from rest_framework import generics, permissions, status
+from .serializers import (RegisterSerializer, VerifyEmailSerializer, CustomTokenObtainPairSerializer,
+                        ForgotPasswordSerializer,ResetPasswordSerializer,UpdatePasswordSerializer
+                        )
 from .utils import generate_verification_code, send_verification_email
 
 User = get_user_model()
@@ -75,3 +78,49 @@ class CheckInactivityView(APIView):
         user.last_activity = now()
         user.save(update_fields=['last_activity'])
         return Response({"message": "Foydalanuvchi hali faol"}, status=200)
+class UpdatePasswordAPIView(generics.UpdateAPIView):
+    """
+    Foydalanuvchining parolini yangilash API
+    - Faqat autentifikatsiya qilingan foydalanuvchilar foydalanishi mumkin
+    """
+    serializer_class = UpdatePasswordSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        """Hozirgi foydalanuvchini qaytaradi"""
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        """Parolni tekshirib, yangilaydi"""
+        
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            # Parolni yangilash
+            serializer.update_password()
+            return Response({"message": "Parol muvaffaqiyatli yangilandi!"}, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ForgotPasswordAPIView(generics.GenericAPIView):
+    """Emailga parolni tiklash kodini yuborish API"""
+    serializer_class = ForgotPasswordSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.send_reset_code()
+            return Response({"message": "Parolni tiklash kodi emailga yuborildi."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResetPasswordAPIView(generics.GenericAPIView):
+    """Kod orqali parolni tiklash API"""
+    serializer_class = ResetPasswordSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.reset_password()
+            return Response({"message": "Parol muvaffaqiyatli tiklandi!"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

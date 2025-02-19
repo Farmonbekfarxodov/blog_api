@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     #Installed_apps
+    'drf_yasg',
     'rest_framework',
 
     'app_posts',
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'app_common',
  
 ]
+
 
 AUTH_USER_MODEL = 'app_users.CustomUser'
 
@@ -139,6 +141,18 @@ REST_FRAMEWORK = {
     )
    
 }
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,  # Disable session auth in Swagger
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': 'Enter JWT token as: Bearer <your_token>'
+        }
+    },
+}
+
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'farmonfarxodovbek@gmail.com'
