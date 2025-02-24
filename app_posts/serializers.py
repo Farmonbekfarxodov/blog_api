@@ -65,7 +65,7 @@ class PostClapsSerializer(serializers.Serializer):
 class PostClapsUserSerializer(serializers.ModelSerializer):
     short_bio = serializers.CharField(source="profile.short_bio")
     avatar = serializers.ImageField(source="profile.avatar")
-    is_followed = serializers.SerializerMethodField
+    is_followed = serializers.SerializerMethodField()
 
 
     class Meta:

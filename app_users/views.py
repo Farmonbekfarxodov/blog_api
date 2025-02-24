@@ -15,6 +15,7 @@ User = get_user_model()
 
 class RegisterView(APIView):
     """Foydalanuvchini ro‘yxatdan o‘tkazish"""
+    serializer_class = RegisterSerializer
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
