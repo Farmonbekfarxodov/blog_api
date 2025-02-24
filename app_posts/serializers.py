@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from app_posts.models import PostCommentModel, PostsModel, TopicsModel
+from app_posts.models import  PostCommentModel, PostsModel, TopicsModel
 from app_users.views import User
 
 class PostAuthorSerializer(serializers.ModelSerializer):
@@ -75,33 +75,23 @@ class PostClapsUserSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_is_followed(obj):
         return True
-    
+
 class PostCommentSerializer(serializers.ModelSerializer):
-    claps_count = serializers.SerializerMethodField()
-    child_count = serializers.SerializerMethodField()
+    children = serializers.SerializerMethodField()
+    user = serializers.StringRelatedField()
 
 
     class Meta:
         model = PostCommentModel
-        fields = ['user','commnet','created_at','claps_count','child_count']
+        fields = ['id','parent','comment','user','children']
+
     
     @staticmethod
-    def get_claps_count(obj):
-        return obj.claps.count()
-    
-    @staticmethod
-    def get_child_count(obj):
+    def get_children(obj):
         return obj.children.count()
 
-    def to_representation(self, instance):
-        data =  super().to_representation(instance)
-        data['user'] = PostClapsUserSerializer(instance=instance.user)
-        return data
+class PostCommentClapsSerializer(serializers.Serializer):
+    pass
 
-class PostCommentModelSerializer(serializers.ModelSerializer):
-    slug = serializers.SlugField()
-    class Meta:
-        model = PostCommentModel
-        fields = ['comment','parent','slug']
-    
+
         
