@@ -62,7 +62,8 @@ class PostCommentModel(BaseModel):
     )
 
     comment = models.TextField()
-    parent = models.ForeignKey('self',on_delete=models.CASCADE,related_name="children")
+    parent = models.ForeignKey('self',on_delete=models.CASCADE,related_name="children",
+                               null=True,blank=True)
 
     def __str__(self):
         return f"{self.user.username} comment to {self.post.id} like:{self.comment}"

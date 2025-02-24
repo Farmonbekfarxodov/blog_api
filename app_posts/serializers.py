@@ -1,40 +1,107 @@
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from app_posts.models import PostsModel
+from app_posts.models import PostCommentModel, PostsModel, TopicsModel
+from app_users.views import User
 
-User = get_user_model()
-
-class PostsSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    slug = serializers.SlugField(read_only=True)
-    title = serializers.CharField()
-    body = serializers.CharField(allow_blank=True)
-    author = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    created_at = serializers.DateTimeField(read_only=True)
-
-    def create(self,validated_data):
-        return PostsModel.objects.create(**validated_data)
+class PostAuthorSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField(read_only=True)
+    avatar = serializers.ImageField(source="profile.avatar",read_only=True)
     
-    def update(self,instance,validated_data):
-        instance.title = validated_data.get('title')
-        instance.body = validated_data.get('body')
-        instance.author = validated_data.get('author')
-        instance.save()
-        return instance
+    class Meta:
+        model = User
+        fields = ['full_name','avatar']
     
-    def to_representation(self, instance):
+    @staticmethod
+    def get_full_name(obj):
+        return obj.get_full_name()
+    
+
+class PostSerializer(serializers.ModelSerializer):
+    topics = serializers.PrimaryKeyRelatedField(
+        queryset = TopicsModel.objects.all(),
+        many=True,
+        required = False,
+        write_only=True
+    )
+    comments_count =  serializers.SerializerMethodField()
+    claps_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = PostsModel
+        fields = ['slug','image','title','body','short_description',
+                  'comments_count','claps_count','topics','created_at']
+        read_only_fileds = ['created_at','slug']
+
+    @staticmethod
+    def get_claps_count(obj):
+        return obj.claps.count()
+    
+    @staticmethod
+    def get_comments_count(obj):
+        return obj.comments.count()
+    
+    def to_representation(self,instance):
         data = super().to_representation(instance)
-
-        data["extra"] = "qo'shildi"
+        data['author'] = PostAuthorSerializer(instance=instance.author).data
+        
         return data
     
-    def validate(self,attrs):
-        print(attrs)
-        return attrs
-    
-    def validate_title(self,value):
-        print(value)
-        raise serializers.ValidationError({"error":"test"})     
+class PostClapsSerializer(serializers.Serializer):
+    slug = serializers.SlugField()
 
-   
+
+    def validate(self,attrs):
+        slug = attrs.get('slug')
+
+        try:
+            post = PostsModel.objects.get(slug=slug)
+        except PostsModel.DoesNotExist:
+            raise serializers.ValidationError("Post does not exists")
+        
+        attrs['post'] = post
+        return attrs
+
+
+class PostClapsUserSerializer(serializers.ModelSerializer):
+    short_bio = serializers.CharField(source="profile.short_bio")
+    avatar = serializers.ImageField(source="profile.avatar")
+    is_followed = serializers.SerializerMethodField
+
+
+    class Meta:
+        model = User
+        fields = ['short_bio','avatar','username','is_followed']
+    
+    @staticmethod
+    def get_is_followed(obj):
+        return True
+    
+class PostCommentSerializer(serializers.ModelSerializer):
+    claps_count = serializers.SerializerMethodField()
+    child_count = serializers.SerializerMethodField()
+
+
+    class Meta:
+        model = PostCommentModel
+        fields = ['user','commnet','created_at','claps_count','child_count']
+    
+    @staticmethod
+    def get_claps_count(obj):
+        return obj.claps.count()
+    
+    @staticmethod
+    def get_child_count(obj):
+        return obj.children.count()
+
+    def to_representation(self, instance):
+        data =  super().to_representation(instance)
+        data['user'] = PostClapsUserSerializer(instance=instance.user)
+        return data
+
+class PostCommentModelSerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField()
+    class Meta:
+        model = PostCommentModel
+        fields = ['comment','parent','slug']
+    
+        

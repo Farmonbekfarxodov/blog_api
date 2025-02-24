@@ -30,6 +30,9 @@ class RegisterView(APIView):
 
             return Response({"message": "Emailga tasdiqlash kodi yuborildi!"}, status=201)
         return Response(serializer.errors, status=400)
+    
+    def get_serializer(self,*args,**kwargs):
+        return self.serializer_class(*args,**kwargs)
 
 class VerifyEmailView(APIView):
     """Emailni tasdiqlash"""
@@ -50,6 +53,8 @@ class VerifyEmailView(APIView):
             except User.DoesNotExist:
                 return Response({"error": "Bunday foydalanuvchi topilmadi!"}, status=404)
         return Response(serializer.errors, status=400)
+    
+   
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     """Foydalanuvchi login qilish"""
@@ -64,6 +69,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         except User.DoesNotExist:
             return Response({"error": "Bunday foydalanuvchi topilmadi!"}, status=404)
         return response
+    
+   
 
 class CheckInactivityView(APIView):
     """10 daqiqa inaktiv bo‘lsa, foydalanuvchini logout qilish"""

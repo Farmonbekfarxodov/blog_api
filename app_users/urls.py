@@ -22,6 +22,7 @@ urlpatterns = [
     path('reset/password/',ResetPasswordAPIView.as_view(),name='reset-password'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     path('check-inactivity/', CheckInactivityView.as_view(), name='check-inactivity'),
+    path('follow/',TokenRefreshView.as_view(),name='follow'),
 ]
 
 
