@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from .views import (RegisterView, VerifyEmailView, CustomTokenObtainPairView, 
+from .views import (FollowUserAPIView, RegisterView, VerifyEmailView, CustomTokenObtainPairView, 
                     CheckInactivityView,UpdatePasswordAPIView,ForgotPasswordAPIView,ResetPasswordAPIView)
 
 
@@ -22,7 +22,7 @@ urlpatterns = [
     path('reset/password/',ResetPasswordAPIView.as_view(),name='reset-password'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     path('check-inactivity/', CheckInactivityView.as_view(), name='check-inactivity'),
-    path('follow/',TokenRefreshView.as_view(),name='follow'),
+    path('follow/',FollowUserAPIView.as_view(),name='follow'),
 ]
 
 

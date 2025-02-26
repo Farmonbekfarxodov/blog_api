@@ -6,13 +6,14 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateDestroyAPIView,ListAPIView,get_object_or_404,ListCreateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated,IsAdminUser
+from rest_framework import viewsets
 
 
 from app_common.permissions import IsCommentOwner, IsOwnerOrReadOnly
-from app_posts.models import PostClapsModel, PostCommentClapsModel, PostCommentModel, PostsModel
-from app_posts.serializers import PostClapsUserSerializer, PostSerializer,PostCommentSerializer
-from app_common.paginations import StandartResultsSetPagination
+from app_posts.models import PostClapsModel, PostCommentClapsModel, PostCommentModel, PostsModel, TopicsModel
+from app_posts.serializers import PostClapsUserSerializer, PostSerializer,PostCommentSerializer, TopicModelSerializer
+from app_common.paginations import LargeResultsSetPagination, StandartResultsSetPagination
 
 User = get_user_model()
 class PostAPIView(APIView):
@@ -168,7 +169,7 @@ class CommentChildrenListAPIView(APIView):
     pagination_class = StandartResultsSetPagination
     serializer_class = PostCommentSerializer
 
-    def get_queryset(self):
+    def get(self):
         comment = get_object_or_404(PostCommentModel,id=self.kwargs['pk'])
         children = PostCommentModel.objects.filter(parent=comment).order_by('-id')
         paginator = self.pagination_class()
@@ -200,8 +201,11 @@ class CommentClapsListCreateAPIView(ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     pagination_class = StandartResultsSetPagination
 
+    def get_queryset(self):
+        return PostCommentClapsModel.objects.all()
+
     def create(self,request,*args,**kwargs):
-        comment = get_object_or_404(PostCommentModel,id=self.kwargs['pk'])
+        comment = get_object_or_404(PostCommentModel,id=self.kwargs.get('pk'))
         PostCommentClapsModel.objects.create(
             user = self.request.user,comment=comment
         )
@@ -211,7 +215,7 @@ class CommentClapsListCreateAPIView(ListCreateAPIView):
         return Response(data={"claps_count":claps_count},status=status.HTTP_201_CREATED)
 
     def list(self,request,*args,**kwargs):
-        comment = get_object_or_404(PostCommentModel,id = self.kwargs['pk'])
+        comment = get_object_or_404(PostCommentModel,id = self.kwargs.get('pk'))
 
         claps = PostCommentClapsModel.objects.filter(comment=comment)
         claps_count = claps.count()
@@ -230,5 +234,14 @@ class CommentClapsListCreateAPIView(ListCreateAPIView):
                 "users":serializer.data
 
             })
-    
 
+class TopicViewSet(viewsets.ModelViewSet):
+    queryset = TopicsModel.objects.all()
+    pagination_class = LargeResultsSetPagination
+    permission_classes = [IsAuthenticated]
+    serializer_class = TopicModelSerializer
+
+    def get_permissions(self):
+        if self.request.method in ["POST","GET"]:
+            return [IsAuthenticated]
+        return [IsAdminUser]

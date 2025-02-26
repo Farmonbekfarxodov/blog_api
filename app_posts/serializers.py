@@ -72,9 +72,10 @@ class PostClapsUserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['short_bio','avatar','username','is_followed']
     
-    @staticmethod
-    def get_is_followed(obj):
-        return True
+    
+    def get_is_followed(self,obj):
+        user = self.context.get('user')
+        return user.following.filter(to_user_id=obj).exists()
 
 class PostCommentSerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField()
@@ -92,6 +93,12 @@ class PostCommentSerializer(serializers.ModelSerializer):
 
 class PostCommentClapsSerializer(serializers.Serializer):
     pass
+
+class TopicModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TopicsModel
+        fields = ['id','title']
+       
 
 
         

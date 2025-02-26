@@ -1,10 +1,11 @@
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-
+from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from app_users.models import FollowModel
 from .utils import generate_verification_code, send_verification_email
+
 
 User = get_user_model()
 
@@ -118,3 +119,44 @@ class ResetPasswordSerializer(serializers.Serializer):
         user.set_password(self.validated_data['new_password'])
         user.verification_code = None  # Kodni o‘chiramiz
         user.save()
+
+class UserSerializer(serializers.ModelSerializer):
+    short_bio = serializers.CharField(source="profile.short_bio")
+    avatar = serializers.ImageField(source="profile.avatar")
+    about = serializers.CharField(source="profile.about")
+    pronouns = serializers.CharField(source="profile.pronouns")
+
+    class Meta:
+        model = User
+        fields = ['first_name','last_name','email','username',
+                  'short_bio','avatar','about','pronouns']
+        
+        def update(self, instance, validated_data):
+            profile_data = validated_data.pop('profile', {})
+
+            # Update User model fields
+            instance.first_name = validated_data.get('first_name', instance.first_name)
+            instance.last_name = validated_data.get('last_name', instance.last_name)
+            instance.email = validated_data.get('email', instance.email)
+            instance.username = validated_data.get('username', instance.username)
+            instance.save()
+
+            # Update related Profile model fields
+            profile = instance.profile
+            profile.short_bio = profile_data.get('short_bio', profile.short_bio)
+            profile.avatar = profile_data.get('avatar', profile.avatar)
+            profile.about = profile_data.get('about', profile.about)
+            profile.pronouns = profile_data.get('pronouns', profile.pronouns)
+            profile.save()
+
+            return instance
+
+
+
+    
+class FollowUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FollowModel
+        fields = ['to_user']
+    
+   
