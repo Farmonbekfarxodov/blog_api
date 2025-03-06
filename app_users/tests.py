@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 User = get_user_model()
 
+
 class RegisterViewTest(APITestCase):
     def setUp(self):
         self.register_url = "/users/register/"
@@ -19,12 +20,11 @@ class RegisterViewTest(APITestCase):
         response = self.client.post(self.register_url, self.valid_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["message"], "Emailga tasdiqlash kodi yuborildi!")
-        
         user = User.objects.get(email=self.valid_data["email"])
         self.assertFalse(user.email_verified)  # Email tasdiqlanmagan bo‘lishi kerak
         self.assertIsNotNone(user.verification_code)  # Tasdiqlash kodi generatsiya qilingan bo‘lishi kerak
         mock_send_email.assert_called_once_with(user.email, user.verification_code)
-    
+
     def test_registration_with_invalid_data(self):
         invalid_data = {
             "username": "",
@@ -36,7 +36,7 @@ class RegisterViewTest(APITestCase):
         self.assertIn("email", response.data)
         self.assertIn("password", response.data)
         self.assertIn("username", response.data)
-    
+
     def test_duplicate_email_registration(self):
         User.objects.create_user(**self.valid_data)
         response = self.client.post(self.register_url, self.valid_data)
