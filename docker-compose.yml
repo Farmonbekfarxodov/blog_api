@@ -5,7 +5,7 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/app
+      - /media/fff/farmonbek/NT/6-modul/api:/app
     ports:
       - "8000:8000"
     depends_on:
