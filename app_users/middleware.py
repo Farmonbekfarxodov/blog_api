@@ -3,8 +3,10 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 class UpdateLastActivityMiddleware:
     """Har safar so‘rov yuborilganda foydalanuvchi faoliyatini yangilash"""
+
     def __init__(self, get_response):
         self.get_response = get_response
 

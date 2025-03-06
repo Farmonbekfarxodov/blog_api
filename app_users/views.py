@@ -8,23 +8,25 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, permissions, status
 
-from .serializers import (FollowUserSerializer, RegisterSerializer, UserSerializer, VerifyEmailSerializer, CustomTokenObtainPairSerializer,
-                        ForgotPasswordSerializer,ResetPasswordSerializer,UpdatePasswordSerializer
-                        )
+from .serializers import (FollowUserSerializer, RegisterSerializer, UserSerializer, VerifyEmailSerializer,
+                          CustomTokenObtainPairSerializer,
+                          ForgotPasswordSerializer, ResetPasswordSerializer, UpdatePasswordSerializer
+                          )
 from .utils import generate_verification_code, send_verification_email
 from app_users.models import FollowModel
 
 User = get_user_model()
 
+
 class RegisterView(APIView):
     """Foydalanuvchini ro‘yxatdan o‘tkazish"""
     serializer_class = RegisterSerializer
+
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            
-            
+
             verification_code = generate_verification_code()
             user.verification_code = verification_code
             user.email_verified = False
@@ -34,12 +36,14 @@ class RegisterView(APIView):
 
             return Response({"message": "Emailga tasdiqlash kodi yuborildi!"}, status=201)
         return Response(serializer.errors, status=400)
-    
-    def get_serializer(self,*args,**kwargs):
-        return self.serializer_class(*args,**kwargs)
+
+    def get_serializer(self, *args, **kwargs):
+        return self.serializer_class(*args, **kwargs)
+
 
 class VerifyEmailView(APIView):
     """Emailni tasdiqlash"""
+
     def post(self, request):
         serializer = VerifyEmailSerializer(data=request.data)
         if serializer.is_valid():
@@ -57,8 +61,7 @@ class VerifyEmailView(APIView):
             except User.DoesNotExist:
                 return Response({"error": "Bunday foydalanuvchi topilmadi!"}, status=404)
         return Response(serializer.errors, status=400)
-    
-   
+
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     """Foydalanuvchi login qilish"""
@@ -73,8 +76,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         except User.DoesNotExist:
             return Response({"error": "Bunday foydalanuvchi topilmadi!"}, status=404)
         return response
-    
-   
+
 
 class CheckInactivityView(APIView):
     """10 daqiqa inaktiv bo‘lsa, foydalanuvchini logout qilish"""
@@ -83,12 +85,16 @@ class CheckInactivityView(APIView):
     def get(self, request):
         user = request.user
         if user.last_activity and now() - user.last_activity > timedelta(minutes=10):
-            return Response({"message": "Sizning sessiyangiz tugadi. Qayta login qiling."}, status=401)
-        
-        
+            return Response(
+                {"message": "Sizning sessiyangiz tugadi. Qayta login qiling."},
+                status=401
+                )
+
         user.last_activity = now()
         user.save(update_fields=['last_activity'])
         return Response({"message": "Foydalanuvchi hali faol"}, status=200)
+
+
 class UpdatePasswordAPIView(generics.UpdateAPIView):
     """
     Foydalanuvchining parolini yangilash API
@@ -103,15 +109,18 @@ class UpdatePasswordAPIView(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         """Parolni tekshirib, yangilaydi"""
-        
+
         serializer = self.get_serializer(data=request.data, context={'request': request})
-        
+
         if serializer.is_valid():
             # Parolni yangilash
             serializer.update_password()
-            return Response({"message": "Parol muvaffaqiyatli yangilandi!"}, status=status.HTTP_200_OK)
-        
+            return Response(
+                {"message": "Parol muvaffaqiyatli yangilandi!"},             status=status.HTTP_200_OK
+                )
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ForgotPasswordAPIView(generics.GenericAPIView):
     """Emailga parolni tiklash kodini yuborish API"""
@@ -121,8 +130,10 @@ class ForgotPasswordAPIView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.send_reset_code()
-            return Response({"message": "Parolni tiklash kodi emailga yuborildi."}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message" : "Parolni tiklash kodi emailga yuborildi."},
+                            status=status.HTTP_200_OK)
+        return Response(serializer.errors,
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResetPasswordAPIView(generics.GenericAPIView):
@@ -133,45 +144,46 @@ class ResetPasswordAPIView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.reset_password()
-            return Response({"message": "Parol muvaffaqiyatli tiklandi!"}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Parol muvaffaqiyatli tiklandi!"},
+                            status=status.HTTP_200_OK)
+        return Response(serializer.errors,
+                        status=status.HTTP_400_BAD_REQUEST)
+
 
 class FollowUserAPIView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = FollowUserSerializer
 
-
-    def post(self,request,*args,**kwargs):
+    def post(self, request, *args, **kwargs):
         response = dict()
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         from_user = request.user
         to_user = serializer.validated_data['to_user']
-        follow_status = FollowModel.objects.filter(from_user,to_user)
+        follow_status = FollowModel.objects.filter(from_user, to_user)
         if follow_status.exists():
             follow_status.first().delete()
             response["detail"] = "User unfollowed"
             response["status"] = "unfollowed"
-            return Response(data=response,status=status.HTTP_204_NO_CONTENT)
+            return Response(data=response, status=status.HTTP_204_NO_CONTENT)
         else:
-            FollowModel.objects.create(from_user=from_user,to_user=to_user)
+            FollowModel.objects.create(from_user=from_user, to_user=to_user)
             response["detail"] = "User followed to this user"
             response["status"] = "followed"
-            return Response(data=response,status=status.HTTP_201_CREATED)
-    
-    def get_serializer(self,*args,**kwargs):
-        return self.serializer_class(*args,**kwargs)
+            return Response(data=response, status=status.HTTP_201_CREATED)
 
-    def get(self,request,*args,**kwargs):
-        follow_type =  request.query_params.get('type')
-        if follow_type not in ["followers","following"]:
+    def get_serializer(self, *args, **kwargs):
+        return self.serializer_class(*args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        follow_type = request.query_params.get('type')
+        if follow_type not in ["followers", "following"]:
             raise ValidationError("Invalid query params")
 
         if follow_type == "following":
-           users = [user.to_user for user in request.user.following.all()]
+            users = [user.to_user for user in request.user.following.all()]
         else:
             users = [user.from_user for user in request.user.followers.all()]
-        
-        serializer = UserSerializer(users,many=True)
-        return Response(data=serializer.data,status=status.HTTP_200_OK)
 
+        serializer = UserSerializer(users, many=True)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)

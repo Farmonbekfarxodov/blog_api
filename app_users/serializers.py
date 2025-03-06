@@ -6,8 +6,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from app_users.models import FollowModel
 from .utils import generate_verification_code, send_verification_email
 
-
 User = get_user_model()
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,15 +26,18 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         # Emailga kodni jo‘natish
         send_verification_email(user.email, verification_code)
-        
+
         return user
+
 
 class VerifyEmailSerializer(serializers.Serializer):
     email = serializers.EmailField()
     code = serializers.CharField()
 
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Login qilishdan oldin email tasdiqlanganligini tekshirish"""
+
     def validate(self, attrs):
         data = super().validate(attrs)
 
@@ -42,10 +45,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise serializers.ValidationError("Email tasdiqlanmagan!")
 
         return data
+
+
 class UpdatePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True)
     new_password = serializers.CharField(required=True, write_only=True, validators=[validate_password])
-    confirm_password = serializers.CharField(required=True, write_only=True) 
+    confirm_password = serializers.CharField(required=True, write_only=True)
 
     def validate_old_password(self, value):
         """Eski parol foydalanuvchining hozirgi paroliga mosligini tekshiradi."""
@@ -66,6 +71,7 @@ class UpdatePasswordSerializer(serializers.Serializer):
         user.set_password(self.validated_data['new_password'])
         user.save()
 
+
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
@@ -79,7 +85,7 @@ class ForgotPasswordSerializer(serializers.Serializer):
         """Emailga parolni tiklash kodini yuborish"""
         email = self.validated_data['email']
         user = User.objects.get(email=email)
-        
+
         # Tasdiqlash kodini generatsiya qilish
         reset_code = generate_verification_code()
         user.verification_code = reset_code
@@ -120,6 +126,7 @@ class ResetPasswordSerializer(serializers.Serializer):
         user.verification_code = None  # Kodni o‘chiramiz
         user.save()
 
+
 class UserSerializer(serializers.ModelSerializer):
     short_bio = serializers.CharField(source="profile.short_bio")
     avatar = serializers.ImageField(source="profile.avatar")
@@ -128,9 +135,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['first_name','last_name','email','username',
-                  'short_bio','avatar','about','pronouns']
-        
+        fields = ['first_name', 'last_name', 'email', 'username',
+                  'short_bio', 'avatar', 'about', 'pronouns']
+
         def update(self, instance, validated_data):
             profile_data = validated_data.pop('profile', {})
 
@@ -152,11 +159,7 @@ class UserSerializer(serializers.ModelSerializer):
             return instance
 
 
-
-    
 class FollowUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = FollowModel
         fields = ['to_user']
-    
-   

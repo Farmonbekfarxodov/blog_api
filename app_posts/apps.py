@@ -6,4 +6,4 @@ class AppPostsConfig(AppConfig):
     name = 'app_posts'
 
     def ready(self):
-        from . import signals
+        from . import signals  # noqa: F401

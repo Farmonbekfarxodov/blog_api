@@ -2,9 +2,11 @@ import random
 from django.core.mail import send_mail
 from django.conf import settings
 
+
 def generate_verification_code():
     """ 6 xonali tasdiqlash kodi yaratish """
     return str(random.randint(100000, 999999))
+
 
 def send_verification_email(email, code):
     """ Emailga tasdiqlash kodini yuborish """
